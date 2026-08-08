@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argon Proxy | Enterprise Gateway</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        base: '#0A0A0B',
+                        panel: '#121214',
+                        borderSubtle: '#27272A'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Enterprise Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525B; }
+        .glass-panel { background: rgba(18, 18, 20, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .fade-in { animation: fadeIn 0.4s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-base text-zinc-300 font-sans min-h-screen antialiased selection:bg-blue-500/30">
+
+    <div class="max-w-[1500px] mx-auto p-6 md:p-8">
+        
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-borderSubtle pb-6 mb-8 gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <h1 class="text-2xl font-semibold text-white tracking-tight">Argon Proxy Gateway</h1>
+                </div>
+                <p class="text-zinc-500 text-sm ml-11">Enterprise DPDP AI Training Enforcement Engine</p>
+            </div>
+            <button id="fetchBtn" class="bg-white hover:bg-zinc-200 text-black px-6 py-2.5 rounded-md text-sm font-medium transition-all shadow-lg flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Extract AI Training Data
+            </button>
+        </header>
+
+        <!-- KPI Metrics Row -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 fade-in">
+            <div class="glass-panel border border-borderSubtle rounded-xl p-5">
+                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Total Rows Intercepted</p>
+                <p class="text-3xl font-light text-white" id="metricTotal">--</p>
+            </div>
+            <div class="glass-panel border border-borderSubtle rounded-xl p-5">
+                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Consented (Passed)</p>
+                <p class="text-3xl font-light text-blue-400" id="metricConsented">--</p>
+            </div>
+            <div class="glass-panel border border-borderSubtle rounded-xl p-5 relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent"></div>
+                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1 relative z-10">DPDP Enforced (Masked)</p>
+                <p class="text-3xl font-light text-emerald-400 relative z-10" id="metricMasked">--</p>
+            </div>
+            <div class="glass-panel border border-borderSubtle rounded-xl p-5">
+                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Privacy Budget (ε)</p>
+                <p class="text-3xl font-light text-zinc-300">1.0 <span class="text-sm text-zinc-600 font-normal">Laplace</span></p>
+            </div>
+        </div>
+
+        <!-- Data Tables Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 fade-in">
+            
+            <!-- RAW Data -->
+            <div class="bg-panel border border-borderSubtle rounded-xl flex flex-col h-[650px] shadow-2xl">
+                <div class="p-5 border-b border-borderSubtle flex justify-between items-center bg-zinc-900/30 rounded-t-xl">
+                    <div>
+                        <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></span>
+                            Raw Database Extraction
+                        </h2>
+                        <p class="text-xs text-zinc-500 mt-1">Pre-proxy view: Illegal exposure of non-consenting user PII.</p>
+                    </div>
+                </div>
+                <div class="overflow-y-auto flex-1 p-0">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="text-[11px] uppercase tracking-wider text-zinc-500 bg-panel sticky top-0 z-10 border-b border-borderSubtle">
+                            <tr>
+                                <th class="px-5 py-3 font-medium">ID</th>
+                                <th class="px-5 py-3 font-medium">Name</th>
+                                <th class="px-5 py-3 font-medium">Email</th>
+                                <th class="px-5 py-3 font-medium text-right">Revenue</th>
+                                <th class="px-5 py-3 font-medium text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rawTableBody" class="text-[13px] divide-y divide-borderSubtle/50">
+                            <tr><td colspan="5" class="px-5 py-12 text-center text-zinc-600 italic">Click extract to simulate database pull...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECURE Data -->
+            <div class="bg-panel border border-borderSubtle rounded-xl flex flex-col h-[650px] shadow-2xl relative">
+                <div class="absolute -inset-[1px] bg-gradient-to-b from-emerald-500/20 to-transparent rounded-xl pointer-events-none opacity-50"></div>
+                <div class="p-5 border-b border-borderSubtle flex justify-between items-center bg-zinc-900/30 rounded-t-xl relative z-10">
+                    <div>
+                        <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                            Argon Secure Payload
+                        </h2>
+                        <p class="text-xs text-emerald-500/70 mt-1">Post-proxy view: NLP masked & mathematically anonymized.</p>
+                    </div>
+                </div>
+                <div class="overflow-y-auto flex-1 p-0 relative z-10">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="text-[11px] uppercase tracking-wider text-zinc-500 bg-panel sticky top-0 z-10 border-b border-borderSubtle">
+                            <tr>
+                                <th class="px-5 py-3 font-medium">ID</th>
+                                <th class="px-5 py-3 font-medium">Name</th>
+                                <th class="px-5 py-3 font-medium">Email</th>
+                                <th class="px-5 py-3 font-medium text-right">Revenue</th>
+                                <th class="px-5 py-3 font-medium text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="safeTableBody" class="text-[13px] divide-y divide-borderSubtle/50">
+                            <tr><td colspan="5" class="px-5 py-12 text-center text-zinc-600 italic">Awaiting proxy interception...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('fetchBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('fetchBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-black inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...`;
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/export-training-data');
+                const data = await response.json();
+                
+                // Update KPI Metrics
+                const total = data.raw_data.length;
+                const consented = data.raw_data.filter(r => r.ai_training_consent === 1).length;
+                document.getElementById('metricTotal').innerText = total;
+                document.getElementById('metricConsented').innerText = consented;
+                document.getElementById('metricMasked').innerText = total - consented;
+
+                // Render Tables
+                renderTable('rawTableBody', data.raw_data, true);
+                renderTable('safeTableBody', data.safe_data, false);
+            } catch (error) {
+                alert('Connection Error. Make sure Uvicorn is running!');
+            }
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+
+        function renderTable(elementId, rows, isRaw) {
+            const tbody = document.getElementById(elementId);
+            tbody.innerHTML = ''; 
+            
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                const isDenied = row.ai_training_consent === 0;
+                
+                // Enterprise row styling: subtle background for denied rows
+                tr.className = 'transition-colors hover:bg-zinc-800/30 ' + 
+                               (isDenied && isRaw ? 'bg-rose-950/10' : '') +
+                               (isDenied && !isRaw ? 'bg-emerald-950/10' : '');
+
+                // Enterprise Badges
+                let badgeHtml = '';
+                if (!isDenied) {
+                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700/50"><span class="w-1 h-1 rounded-full bg-zinc-500"></span>Consented</span>`;
+                } else if (isRaw) {
+                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20"><span class="w-1 h-1 rounded-full bg-rose-500"></span>Violating</span>`;
+                } else {
+                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1 h-1 rounded-full bg-emerald-500"></span>Anonymized</span>`;
+                }
+
+                // Format Revenue
+                const revFormatted = parseFloat(row.revenue).toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+                
+                // Dim redacted text
+                const nameDisplay = row.customer_name === '[REDACTED]' 
+                    ? `<span class="text-zinc-600 font-mono text-[11px] tracking-wider">${row.customer_name}</span>` 
+                    : `<span class="${isRaw && isDenied ? 'text-rose-200' : 'text-zinc-200'}">${row.customer_name}</span>`;
+                    
+                const emailDisplay = row.customer_email === '[REDACTED]' 
+                    ? `<span class="text-zinc-600 font-mono text-[11px] tracking-wider">${row.customer_email}</span>` 
+                    : `<span class="text-zinc-400">${row.customer_email}</span>`;
+
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-zinc-500 font-mono text-[11px]">${row.customer_id}</td>
+                    <td class="px-5 py-3">${nameDisplay}</td>
+                    <td class="px-5 py-3">${emailDisplay}</td>
+                    <td class="px-5 py-3 text-right font-mono text-[12px] ${!isRaw && isDenied ? 'text-emerald-400 font-medium' : 'text-zinc-400'}">${revFormatted}</td>
+                    <td class="px-5 py-3 text-center">${badgeHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>

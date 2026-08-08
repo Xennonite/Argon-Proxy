@@ -1,0 +1,20 @@
+# Environments
+venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+
+# Database Files
+*.db
+*.sqlite3
+
+# Data Files (Keeping large CSVs off GitHub)
+*.csv
+
+# OS generated files
+.DS_Store
