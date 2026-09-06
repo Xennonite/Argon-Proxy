@@ -3,154 +3,745 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Argon Proxy | Enterprise Gateway</title>
-    <!-- Inter Font -->
+    <title>Argon Proxy | Enterprise DPDP Gateway</title>
+    <!-- Google Fonts: Onest & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN (r128 for WebGL 3D Atmosphere & Shaders) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Onest', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
                     colors: {
-                        base: '#0A0A0B',
-                        panel: '#121214',
-                        borderSubtle: '#27272A'
+                        ink: '#05070a',
+                        'ink-raised': '#0a0e12',
+                        'ink-panel': '#0c1015',
+                        bone: '#dfe7e0',
+                        'bone-dim': '#aab4ad',
+                        muted: '#78837c',
+                        vermilion: '#e0231c',
+                        ember: '#ff5a3c',
+                        gold: '#c9a24a',
+                    },
+                    borderColor: {
+                        line: 'rgba(223, 231, 224, 0.13)',
+                        'line-soft': 'rgba(223, 231, 224, 0.07)',
                     }
                 }
             }
         }
     </script>
     <style>
-        /* Enterprise Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* Kage Design Tokens */
+        :root {
+            --ink: #05070a;
+            --ink-2: #0a0e12;
+            --bone: #dfe7e0;
+            --bone-dim: #aab4ad;
+            --muted: #78837c;
+            --line: rgba(223, 231, 224, 0.13);
+            --line-soft: rgba(223, 231, 224, 0.07);
+            --vermilion: #e0231c;
+            --ember: #ff5a3c;
+            --gold: #c9a24a;
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--ink);
+            color: var(--bone);
+            font-family: 'Onest', system-ui, sans-serif;
+            font-weight: 300;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        ::selection {
+            background: var(--vermilion);
+            color: #ffffff;
+        }
+
+        /* Enterprise Kage Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #52525B; }
-        .glass-panel { background: rgba(18, 18, 20, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .fade-in { animation: fadeIn 0.4s ease-in forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar-thumb { background: rgba(223, 231, 224, 0.12); border-radius: 6px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 90, 60, 0.35); }
+
+        /* Cinematic Film Grain Overlay */
+        #grain {
+            position: fixed;
+            inset: -1px;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.042;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Cinematic Atmospheric Lighting */
+        .kage-ambient {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+            background: 
+                radial-gradient(110% 70% at 50% -10%, rgba(224, 35, 28, 0.12) 0%, rgba(5, 7, 10, 0) 65%),
+                radial-gradient(130% 90% at 50% 50%, transparent 35%, rgba(2, 4, 6, 0.8) 100%);
+        }
+
+        .kage-grid-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+            background-image: 
+                linear-gradient(to right, rgba(223, 231, 224, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(223, 231, 224, 0.02) 1px, transparent 1px);
+            background-size: 48px 48px;
+            opacity: 0.7;
+        }
+
+        .glass-panel {
+            background: rgba(10, 14, 18, 0.75);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--line-soft);
+        }
+
+        .panel-rim-ember {
+            position: relative;
+        }
+        .panel-rim-ember::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 5%;
+            right: 5%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 90, 60, 0.5), transparent);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .panel-rim-emerald {
+            position: relative;
+        }
+        .panel-rim-emerald::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 5%;
+            right: 5%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.5), transparent);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .fade-in { animation: fadeIn 0.45s var(--ease-out) forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="bg-base text-zinc-300 font-sans min-h-screen antialiased selection:bg-blue-500/30">
+<body class="min-h-screen antialiased relative overflow-x-hidden">
 
-    <div class="max-w-[1500px] mx-auto p-6 md:p-8">
+    <!-- Kage 3D WebGL Atmosphere Canvas -->
+    <canvas id="gl" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+    
+    <!-- Film Grain & Ambient Vignette -->
+    <div id="grain"></div>
+    <div class="kage-ambient"></div>
+    <div class="kage-grid-overlay"></div>
+
+    <div class="relative z-10 max-w-[1540px] mx-auto p-6 md:p-10">
         
         <!-- Header Section -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-borderSubtle pb-6 mb-8 gap-4">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[rgba(223,231,224,0.08)] pb-7 mb-8 gap-6">
             <div>
-                <div class="flex items-center gap-3 mb-1">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    </div>
-                    <h1 class="text-2xl font-semibold text-white tracking-tight">Argon Proxy Gateway</h1>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-vermilion shadow-[0_0_8px_#e0231c] animate-pulse"></span>
+                    <span class="text-[10px] font-medium tracking-[0.24em] uppercase text-bone-dim">Digital Personal Data Protection // AI Pipeline Interceptor</span>
                 </div>
-                <p class="text-zinc-500 text-sm ml-11">Enterprise DPDP AI Training Enforcement Engine</p>
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-[#e0231c]/25 to-[#ff5a3c]/10 border border-[#e0231c]/40 flex items-center justify-center shadow-[0_0_18px_rgba(224,35,28,0.25)]">
+                        <svg class="w-4 h-4 text-[#ff5a3c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex items-baseline gap-3">
+                        <h1 class="text-2xl md:text-3xl font-medium text-bone tracking-tight">Argon Proxy</h1>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-[rgba(223,231,224,0.12)] text-muted tracking-wide uppercase bg-ink-raised">Gateway v1.2</span>
+                    </div>
+                </div>
             </div>
-            <button id="fetchBtn" class="bg-white hover:bg-zinc-200 text-black px-6 py-2.5 rounded-md text-sm font-medium transition-all shadow-lg flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Extract AI Training Data
+
+            <!-- Extract Action Button -->
+            <button id="fetchBtn" class="group relative px-6 py-2.5 rounded-md text-xs font-medium tracking-[0.16em] uppercase text-bone transition-all duration-300 bg-gradient-to-b from-[#141920] to-[#0a0e12] border border-[#ff5a3c]/40 hover:border-[#ff5a3c] shadow-[0_0_15px_rgba(224,35,28,0.15)] hover:shadow-[0_0_25px_rgba(255,90,60,0.35)] flex items-center gap-2.5 overflow-hidden active:scale-[0.98]">
+                <span class="w-1.5 h-1.5 rounded-full bg-ember shadow-[0_0_6px_#ff5a3c] transition-transform duration-300 group-hover:scale-125"></span>
+                <span>Extract AI Training Data</span>
+                <svg class="w-3.5 h-3.5 text-bone-dim group-hover:translate-x-0.5 group-hover:text-bone transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                </svg>
             </button>
         </header>
 
         <!-- KPI Metrics Row -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 fade-in">
-            <div class="glass-panel border border-borderSubtle rounded-xl p-5">
-                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Total Rows Intercepted</p>
-                <p class="text-3xl font-light text-white" id="metricTotal">--</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 fade-in">
+            <!-- Metric 1 -->
+            <div class="glass-panel rounded-xl p-5 relative overflow-hidden transition-all duration-300 hover:border-[rgba(223,231,224,0.18)]">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-medium text-bone-dim uppercase tracking-[0.2em]">Total Intercepted</p>
+                    <span class="w-1.5 h-1.5 rounded-full bg-bone-dim/40"></span>
+                </div>
+                <p class="text-3xl font-light font-mono text-bone tracking-tight" id="metricTotal">--</p>
+                <p class="text-[11px] text-muted mt-2">Active database extraction batch</p>
             </div>
-            <div class="glass-panel border border-borderSubtle rounded-xl p-5">
-                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Consented (Passed)</p>
-                <p class="text-3xl font-light text-blue-400" id="metricConsented">--</p>
+
+            <!-- Metric 2 -->
+            <div class="glass-panel rounded-xl p-5 relative overflow-hidden transition-all duration-300 hover:border-[rgba(223,231,224,0.18)]">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-medium text-bone-dim uppercase tracking-[0.2em]">Consented (Passed)</p>
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/80 shadow-[0_0_6px_rgba(52,211,153,0.5)]"></span>
+                </div>
+                <p class="text-3xl font-light font-mono text-emerald-400 tracking-tight" id="metricConsented">--</p>
+                <p class="text-[11px] text-muted mt-2">Verified AI pipeline consent</p>
             </div>
-            <div class="glass-panel border border-borderSubtle rounded-xl p-5 relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent"></div>
-                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1 relative z-10">DPDP Enforced (Masked)</p>
-                <p class="text-3xl font-light text-emerald-400 relative z-10" id="metricMasked">--</p>
+
+            <!-- Metric 3 -->
+            <div class="glass-panel rounded-xl p-5 relative overflow-hidden transition-all duration-300 hover:border-ember/40 panel-rim-ember">
+                <div class="absolute inset-0 bg-gradient-to-r from-vermilion/10 via-ember/5 to-transparent pointer-events-none"></div>
+                <div class="flex items-center justify-between mb-2 relative z-10">
+                    <p class="text-[10px] font-medium text-bone-dim uppercase tracking-[0.2em]">DPDP Enforced</p>
+                    <span class="w-1.5 h-1.5 rounded-full bg-ember shadow-[0_0_8px_#ff5a3c] animate-pulse"></span>
+                </div>
+                <p class="text-3xl font-light font-mono text-ember tracking-tight relative z-10" id="metricMasked">--</p>
+                <p class="text-[11px] text-muted mt-2 relative z-10">NLP Masked & Laplace Perturbed</p>
             </div>
-            <div class="glass-panel border border-borderSubtle rounded-xl p-5">
-                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Privacy Budget (ε)</p>
-                <p class="text-3xl font-light text-zinc-300">1.0 <span class="text-sm text-zinc-600 font-normal">Laplace</span></p>
+
+            <!-- Metric 4 -->
+            <div class="glass-panel rounded-xl p-5 relative overflow-hidden transition-all duration-300 hover:border-gold/40">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-medium text-bone-dim uppercase tracking-[0.2em]">Privacy Budget (ε)</p>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gold shadow-[0_0_6px_#c9a24a]"></span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-3xl font-light font-mono text-gold tracking-tight">1.0</p>
+                    <span class="text-[9px] font-mono text-gold/80 px-1.5 py-0.5 rounded border border-gold/30 bg-gold/10 tracking-widest uppercase">Laplace</span>
+                </div>
+                <p class="text-[11px] text-muted mt-2">Sensitivity Δf = 500.0 (Clamped)</p>
             </div>
         </div>
 
         <!-- Data Tables Grid -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 fade-in">
             
-            <!-- RAW Data -->
-            <div class="bg-panel border border-borderSubtle rounded-xl flex flex-col h-[650px] shadow-2xl">
-                <div class="p-5 border-b border-borderSubtle flex justify-between items-center bg-zinc-900/30 rounded-t-xl">
+            <!-- RAW Data Panel -->
+            <div class="glass-panel rounded-xl flex flex-col h-[670px] shadow-2xl relative overflow-hidden border border-[rgba(223,231,224,0.08)]">
+                <div class="p-5 border-b border-[rgba(223,231,224,0.07)] flex justify-between items-center bg-[#070a0e]/90">
                     <div>
-                        <h2 class="text-sm font-semibold text-white flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></span>
+                        <h2 class="text-sm font-medium text-bone flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-vermilion shadow-[0_0_10px_#e0231c]"></span>
                             Raw Database Extraction
                         </h2>
-                        <p class="text-xs text-zinc-500 mt-1">Pre-proxy view: Illegal exposure of non-consenting user PII.</p>
+                        <p class="text-[11px] text-muted mt-1">Pre-proxy view // Unauthorized exposure of non-consenting PII</p>
                     </div>
+                    <span class="text-[9px] font-mono tracking-widest uppercase text-vermilion px-2 py-0.5 rounded border border-vermilion/30 bg-vermilion/5">Unprotected</span>
                 </div>
                 <div class="overflow-y-auto flex-1 p-0">
                     <table class="w-full text-left border-collapse">
-                        <thead class="text-[11px] uppercase tracking-wider text-zinc-500 bg-panel sticky top-0 z-10 border-b border-borderSubtle">
+                        <thead class="text-[10px] font-mono uppercase tracking-[0.18em] text-bone-dim/70 bg-[#0a0e12]/95 sticky top-0 z-10 border-b border-[rgba(223,231,224,0.07)]">
                             <tr>
-                                <th class="px-5 py-3 font-medium">ID</th>
-                                <th class="px-5 py-3 font-medium">Name</th>
-                                <th class="px-5 py-3 font-medium">Email</th>
-                                <th class="px-5 py-3 font-medium text-right">Revenue</th>
-                                <th class="px-5 py-3 font-medium text-center">Status</th>
+                                <th class="px-5 py-3.5 font-normal">ID</th>
+                                <th class="px-5 py-3.5 font-normal">Customer Name</th>
+                                <th class="px-5 py-3.5 font-normal">Email Address</th>
+                                <th class="px-5 py-3.5 font-normal text-right">Revenue</th>
+                                <th class="px-5 py-3.5 font-normal text-center">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="rawTableBody" class="text-[13px] divide-y divide-borderSubtle/50">
-                            <tr><td colspan="5" class="px-5 py-12 text-center text-zinc-600 italic">Click extract to simulate database pull...</td></tr>
+                        <tbody id="rawTableBody" class="text-[13px] divide-y divide-[rgba(223,231,224,0.04)] font-sans">
+                            <tr>
+                                <td colspan="5" class="px-5 py-24 text-center text-muted/60 italic font-light tracking-wide">
+                                    Click "Extract AI Training Data" to simulate database pull...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- SECURE Data -->
-            <div class="bg-panel border border-borderSubtle rounded-xl flex flex-col h-[650px] shadow-2xl relative">
-                <div class="absolute -inset-[1px] bg-gradient-to-b from-emerald-500/20 to-transparent rounded-xl pointer-events-none opacity-50"></div>
-                <div class="p-5 border-b border-borderSubtle flex justify-between items-center bg-zinc-900/30 rounded-t-xl relative z-10">
+            <!-- SECURE Data Panel -->
+            <div class="glass-panel panel-rim-emerald rounded-xl flex flex-col h-[670px] shadow-2xl relative overflow-hidden border border-[rgba(223,231,224,0.08)]">
+                <div class="p-5 border-b border-[rgba(223,231,224,0.07)] flex justify-between items-center bg-[#070a0e]/90 relative z-10">
                     <div>
-                        <h2 class="text-sm font-semibold text-white flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                        <h2 class="text-sm font-medium text-bone flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]"></span>
                             Argon Secure Payload
                         </h2>
-                        <p class="text-xs text-emerald-500/70 mt-1">Post-proxy view: NLP masked & mathematically anonymized.</p>
+                        <p class="text-[11px] text-emerald-400/75 mt-1">Post-proxy view // Microsoft Presidio NLP masked & Laplace differential privacy</p>
                     </div>
+                    <span class="text-[9px] font-mono tracking-widest uppercase text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/5">DPDP Enforced</span>
                 </div>
                 <div class="overflow-y-auto flex-1 p-0 relative z-10">
                     <table class="w-full text-left border-collapse">
-                        <thead class="text-[11px] uppercase tracking-wider text-zinc-500 bg-panel sticky top-0 z-10 border-b border-borderSubtle">
+                        <thead class="text-[10px] font-mono uppercase tracking-[0.18em] text-bone-dim/70 bg-[#0a0e12]/95 sticky top-0 z-10 border-b border-[rgba(223,231,224,0.07)]">
                             <tr>
-                                <th class="px-5 py-3 font-medium">ID</th>
-                                <th class="px-5 py-3 font-medium">Name</th>
-                                <th class="px-5 py-3 font-medium">Email</th>
-                                <th class="px-5 py-3 font-medium text-right">Revenue</th>
-                                <th class="px-5 py-3 font-medium text-center">Status</th>
+                                <th class="px-5 py-3.5 font-normal">ID</th>
+                                <th class="px-5 py-3.5 font-normal">Customer Name</th>
+                                <th class="px-5 py-3.5 font-normal">Email Address</th>
+                                <th class="px-5 py-3.5 font-normal text-right">Revenue (DP)</th>
+                                <th class="px-5 py-3.5 font-normal text-center">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="safeTableBody" class="text-[13px] divide-y divide-borderSubtle/50">
-                            <tr><td colspan="5" class="px-5 py-12 text-center text-zinc-600 italic">Awaiting proxy interception...</td></tr>
+                        <tbody id="safeTableBody" class="text-[13px] divide-y divide-[rgba(223,231,224,0.04)] font-sans">
+                            <tr>
+                                <td colspan="5" class="px-5 py-24 text-center text-muted/60 italic font-light tracking-wide">
+                                    Awaiting proxy interception and privacy transformation...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
         </div>
+
+        <!-- Footer Caption -->
+        <footer class="mt-8 pt-4 border-t border-[rgba(223,231,224,0.06)] flex flex-col md:flex-row justify-between items-center text-[11px] text-muted gap-2">
+            <div>
+                <span class="text-bone-dim font-medium">Argon Privacy Gateway</span> &bull; Compliance Layer for AI Pipeline Ingestion
+            </div>
+            <div class="font-mono text-[10px] text-muted/70 tracking-widest uppercase">
+                DPDP Act 2023 &bull; Presidio 2.2 &bull; Laplace ε=1.0
+            </div>
+        </footer>
+
     </div>
 
     <script>
+        // =====================================================================
+        // KAGE 3D WEBGL ENGINE: Kyoto Night Walk Atmospheric Shaders
+        // =====================================================================
+        (function initKageWebGL() {
+            const canvas = document.getElementById('gl');
+            if (!canvas || !window.THREE) return;
+
+            const renderer = new THREE.WebGLRenderer({
+                canvas,
+                alpha: true,
+                antialias: true,
+                powerPreference: 'high-performance'
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 100);
+
+            const clock = new THREE.Clock();
+
+            // 1. Vermilion Moon with Atmospheric Corona Shader
+            const moonGeo = new THREE.PlaneGeometry(64, 64);
+            const moonMat = new THREE.ShaderMaterial({
+                transparent: true,
+                depthWrite: false,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uColorCore: { value: new THREE.Color('#fff0d4') },
+                    uColorVermilion: { value: new THREE.Color('#e0231c') },
+                    uColorEmber: { value: new THREE.Color('#ff5a3c') }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uColorCore;
+                    uniform vec3 uColorVermilion;
+                    uniform vec3 uColorEmber;
+                    varying vec2 vUv;
+
+                    void main() {
+                        vec2 center = vec2(0.5);
+                        float dist = length(vUv - center) * 2.0;
+
+                        // Crisp moon disc with soft antialiased limb
+                        float disc = smoothstep(0.44, 0.41, dist);
+
+                        // Multi-layered corona glow
+                        float halo = pow(max(0.0, 1.0 - dist * 0.88), 2.8) * 1.7;
+                        float outerEmber = pow(max(0.0, 1.0 - dist * 0.58), 4.2) * 1.1;
+
+                        // Subtle atmospheric breathing
+                        float pulse = 0.96 + 0.04 * sin(uTime * 1.3);
+                        halo *= pulse;
+
+                        vec3 col = mix(uColorVermilion, uColorCore, disc);
+                        col = mix(uColorEmber, col, clamp(disc + halo * 0.65, 0.0, 1.0));
+
+                        float alpha = clamp(disc + halo * 0.75 + outerEmber * 0.45, 0.0, 1.0);
+                        if (alpha < 0.005) discard;
+
+                        gl_FragColor = vec4(col, alpha * 0.88);
+                    }
+                `
+            });
+            const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+            moonMesh.position.set(46, 22, -120);
+            scene.add(moonMesh);
+
+            // 2. Volumetric Mountain Mist & Fog Shader
+            const mistGeo = new THREE.PlaneGeometry(260, 150);
+            const mistMat = new THREE.ShaderMaterial({
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uColorMist: { value: new THREE.Color('#dfe7e0') },
+                    uColorGlow: { value: new THREE.Color('#ff5a3c') },
+                    uPulse: { value: 0.0 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uColorMist;
+                    uniform vec3 uColorGlow;
+                    uniform float uPulse;
+                    varying vec2 vUv;
+
+                    float hash(vec2 p) {
+                        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+                    }
+                    float noise(vec2 p) {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        vec2 u = f * f * (3.0 - 2.0 * f);
+                        return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+                                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+                    }
+                    float fbm(vec2 p) {
+                        float v = 0.0;
+                        float a = 0.5;
+                        for (int i = 0; i < 4; i++) {
+                            v += a * noise(p);
+                            p *= 2.06;
+                            a *= 0.5;
+                        }
+                        return v;
+                    }
+
+                    void main() {
+                        vec2 p = vUv * vec2(2.6, 1.3);
+                        p.x -= uTime * 0.032;
+                        p.y += sin(uTime * 0.06 + vUv.x * 2.2) * 0.08;
+
+                        float n = fbm(p + fbm(p + uTime * 0.025));
+                        
+                        // Altitude fade & boundary edge smoothing
+                        float heightFade = smoothstep(0.0, 0.35, vUv.y) * smoothstep(1.0, 0.6, vUv.y);
+                        float edgeFade = smoothstep(0.0, 0.22, vUv.x) * smoothstep(1.0, 0.78, vUv.x);
+                        
+                        float density = smoothstep(0.28, 0.85, n) * heightFade * edgeFade * 0.17;
+                        density += uPulse * 0.14 * heightFade;
+
+                        vec3 col = mix(uColorMist * 0.32, uColorGlow * 0.55, vUv.x * 0.45 + uPulse * 0.5);
+                        gl_FragColor = vec4(col, density);
+                    }
+                `
+            });
+            const mistMesh1 = new THREE.Mesh(mistGeo, mistMat);
+            mistMesh1.position.set(0, -12, -50);
+            scene.add(mistMesh1);
+
+            const mistMesh2 = new THREE.Mesh(mistGeo, mistMat);
+            mistMesh2.position.set(-25, 12, -80);
+            mistMesh2.rotation.z = 0.06;
+            scene.add(mistMesh2);
+
+            // 3. Drifting 3D Ember Sparks & Kyoto Fireflies
+            const emberCount = 580;
+            const emberPositions = new Float32Array(emberCount * 3);
+            const emberColors = new Float32Array(emberCount * 3);
+            const emberSizes = new Float32Array(emberCount);
+            const emberSeeds = new Float32Array(emberCount);
+            const emberSpeeds = new Float32Array(emberCount);
+
+            const cVermilion = new THREE.Color('#e0231c');
+            const cEmber = new THREE.Color('#ff5a3c');
+            const cGold = new THREE.Color('#c9a24a');
+            const cWhite = new THREE.Color('#fff5e8');
+
+            for (let i = 0; i < emberCount; i++) {
+                emberPositions[i * 3 + 0] = (Math.random() - 0.5) * 170;
+                emberPositions[i * 3 + 1] = (Math.random() - 0.5) * 110;
+                emberPositions[i * 3 + 2] = (Math.random() - 0.5) * 130 - 30;
+
+                emberSizes[i] = 14.0 + Math.random() * 28.0;
+                emberSeeds[i] = Math.random() * 100.0;
+                emberSpeeds[i] = 0.18 + Math.random() * 0.38;
+
+                const r = Math.random();
+                let c = cEmber;
+                if (r < 0.32) c = cVermilion;
+                else if (r < 0.72) c = cEmber;
+                else if (r < 0.94) c = cGold;
+                else c = cWhite;
+
+                emberColors[i * 3 + 0] = c.r;
+                emberColors[i * 3 + 1] = c.g;
+                emberColors[i * 3 + 2] = c.b;
+            }
+
+            const emberGeo = new THREE.BufferGeometry();
+            emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPositions, 3));
+            emberGeo.setAttribute('color', new THREE.BufferAttribute(emberColors, 3));
+            emberGeo.setAttribute('size', new THREE.BufferAttribute(emberSizes, 1));
+            emberGeo.setAttribute('seed', new THREE.BufferAttribute(emberSeeds, 1));
+            emberGeo.setAttribute('speed', new THREE.BufferAttribute(emberSpeeds, 1));
+
+            const emberMat = new THREE.ShaderMaterial({
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uSurge: { value: 0.0 },
+                    uMouseX: { value: 0.0 },
+                    uMouseY: { value: 0.0 }
+                },
+                vertexShader: `
+                    uniform float uTime;
+                    uniform float uSurge;
+                    uniform float uMouseX;
+                    uniform float uMouseY;
+                    attribute float size;
+                    attribute float seed;
+                    attribute float speed;
+                    attribute vec3 color;
+                    varying vec3 vColor;
+                    varying float vAlpha;
+
+                    void main() {
+                        vColor = color;
+                        vec3 pos = position;
+
+                        // Vertical ascent
+                        float totalTime = uTime * (speed * 8.5 + uSurge * 25.0) + seed;
+                        pos.y = mod(pos.y + totalTime + 55.0, 110.0) - 55.0;
+
+                        // Sinusoidal curl noise drift
+                        pos.x += sin(uTime * 0.75 + seed + pos.y * 0.04) * (2.8 + uSurge * 6.5);
+                        pos.z += cos(uTime * 0.65 + seed * 1.4 + pos.y * 0.035) * (2.2 + uSurge * 5.5);
+
+                        // Interactive cursor avoidance
+                        vec2 toMouse = vec2(pos.x - uMouseX * 42.0, pos.y - uMouseY * 32.0);
+                        float distMouse = length(toMouse);
+                        if (distMouse < 26.0) {
+                            pos.xy += normalize(toMouse) * (26.0 - distMouse) * 0.38;
+                        }
+
+                        vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
+                        gl_Position = projectionMatrix * mvPos;
+
+                        float flicker = 0.72 + 0.28 * sin(uTime * 3.8 + seed * 14.0);
+                        vAlpha = flicker * smoothstep(-55.0, -40.0, pos.y) * smoothstep(55.0, 40.0, pos.y);
+
+                        gl_PointSize = size * (125.0 / -mvPos.z) * flicker;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    varying float vAlpha;
+
+                    void main() {
+                        vec2 coord = gl_PointCoord - vec2(0.5);
+                        float dist = length(coord);
+                        if (dist > 0.5) discard;
+
+                        float core = smoothstep(0.18, 0.0, dist);
+                        float glow = pow(max(0.0, 1.0 - dist * 2.0), 2.3);
+
+                        vec3 finalColor = vColor + vec3(0.55) * core;
+                        float finalAlpha = (core * 0.95 + glow * 0.7) * vAlpha;
+
+                        gl_FragColor = vec4(finalColor, finalAlpha);
+                    }
+                `
+            });
+            const emberPoints = new THREE.Points(emberGeo, emberMat);
+            scene.add(emberPoints);
+
+            // 4. Kyoto Temple Silhouette & Horizon Ridges (Charred Cypress Geometry)
+            const charredMat = new THREE.MeshBasicMaterial({ color: 0x05070a, depthWrite: true });
+
+            const ridgeShape = new THREE.Shape();
+            ridgeShape.moveTo(-160, -55);
+            ridgeShape.quadraticCurveTo(-70, -28, 0, -36);
+            ridgeShape.quadraticCurveTo(80, -22, 160, -52);
+            ridgeShape.lineTo(160, -75);
+            ridgeShape.lineTo(-160, -75);
+            ridgeShape.closePath();
+            const ridgeGeo = new THREE.ShapeGeometry(ridgeShape);
+            const ridgeMesh = new THREE.Mesh(ridgeGeo, charredMat);
+            ridgeMesh.position.set(0, 0, -110);
+            scene.add(ridgeMesh);
+
+            // Subtle Japanese temple eave silhouette
+            const eaveShape = new THREE.Shape();
+            eaveShape.moveTo(32, 50);
+            eaveShape.quadraticCurveTo(80, 48, 125, 58);
+            eaveShape.lineTo(125, 54);
+            eaveShape.quadraticCurveTo(80, 45, 32, 46);
+            eaveShape.closePath();
+            const eaveGeo = new THREE.ShapeGeometry(eaveShape);
+            const eaveMesh = new THREE.Mesh(eaveGeo, charredMat);
+            eaveMesh.position.set(0, 0, -60);
+            scene.add(eaveMesh);
+
+            // 5. Diagonal Rain Streaks (Kyoto Night Atmospheric Weather)
+            const rainCount = 420;
+            const rainPositions = new Float32Array(rainCount * 6);
+            for (let i = 0; i < rainCount; i++) {
+                const x = (Math.random() - 0.5) * 170;
+                const y = (Math.random() - 0.5) * 110;
+                const z = (Math.random() - 0.5) * 80;
+                rainPositions[i * 6 + 0] = x;
+                rainPositions[i * 6 + 1] = y;
+                rainPositions[i * 6 + 2] = z;
+                rainPositions[i * 6 + 3] = x - 0.8;
+                rainPositions[i * 6 + 4] = y - 4.8;
+                rainPositions[i * 6 + 5] = z;
+            }
+            const rainGeo = new THREE.BufferGeometry();
+            rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+            const rainMat = new THREE.LineBasicMaterial({
+                color: 0x8a9992,
+                transparent: true,
+                opacity: 0.16,
+                blending: THREE.AdditiveBlending
+            });
+            const rainLines = new THREE.LineSegments(rainGeo, rainMat);
+            scene.add(rainLines);
+
+            // Interactive Mouse & Camera Parallax
+            const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+            window.addEventListener('mousemove', (e) => {
+                mouse.targetX = (e.clientX / window.innerWidth - 0.5) * 2.0;
+                mouse.targetY = -(e.clientY / window.innerHeight - 0.5) * 2.0;
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Reactive Data Interception Surge Trigger
+            let surge = 0.0;
+            let targetSurge = 0.0;
+            window.triggerDataPulse = function() {
+                targetSurge = 1.0;
+            };
+            window.releaseDataPulse = function() {
+                targetSurge = 0.0;
+            };
+
+            // Main Animation Render Loop
+            function animate() {
+                requestAnimationFrame(animate);
+                const elapsedTime = clock.getElapsedTime();
+
+                // Damped mouse parallax
+                mouse.x += (mouse.targetX - mouse.x) * 0.045;
+                mouse.y += (mouse.targetY - mouse.y) * 0.045;
+
+                camera.position.x = mouse.x * 6.5;
+                camera.position.y = mouse.y * 4.5;
+                camera.lookAt(0, 0, -40);
+
+                // Damped surge
+                surge += (targetSurge - surge) * 0.065;
+
+                // Update Shader Uniforms
+                moonMat.uniforms.uTime.value = elapsedTime;
+                mistMat.uniforms.uTime.value = elapsedTime;
+                mistMat.uniforms.uPulse.value = surge;
+                emberMat.uniforms.uTime.value = elapsedTime;
+                emberMat.uniforms.uSurge.value = surge;
+                emberMat.uniforms.uMouseX.value = mouse.x;
+                emberMat.uniforms.uMouseY.value = mouse.y;
+
+                // Animate Rain
+                const positions = rainLines.geometry.attributes.position.array;
+                for (let i = 0; i < rainCount; i++) {
+                    positions[i * 6 + 1] -= (2.6 + surge * 2.2);
+                    positions[i * 6 + 4] -= (2.6 + surge * 2.2);
+                    positions[i * 6 + 0] -= 0.45;
+                    positions[i * 6 + 3] -= 0.45;
+
+                    if (positions[i * 6 + 1] < -58.0) {
+                        positions[i * 6 + 1] = 58.0;
+                        positions[i * 6 + 4] = 53.2;
+                        positions[i * 6 + 0] = (Math.random() - 0.5) * 170;
+                        positions[i * 6 + 3] = positions[i * 6 + 0] - 0.8;
+                    }
+                }
+                rainLines.geometry.attributes.position.needsUpdate = true;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+        })();
+
+        // =====================================================================
+        // APPLICATION DATA PIPELINE & COMPLIANCE LOGIC
+        // =====================================================================
         document.getElementById('fetchBtn').addEventListener('click', async () => {
             const btn = document.getElementById('fetchBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-black inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...`;
+            const originalHtml = btn.innerHTML;
+            
+            btn.innerHTML = `
+                <svg class="animate-spin -ml-0.5 mr-2 h-3.5 w-3.5 text-ember inline" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Intercepting & Enforcing...</span>
+            `;
             btn.disabled = true;
+
+            // Trigger 3D WebGL Atmosphere Surge Wave
+            if (window.triggerDataPulse) window.triggerDataPulse();
 
             try {
                 const response = await fetch('/api/export-training-data');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
                 const data = await response.json();
                 
                 // Update KPI Metrics
@@ -160,15 +751,17 @@
                 document.getElementById('metricConsented').innerText = consented;
                 document.getElementById('metricMasked').innerText = total - consented;
 
-                // Render Tables
+                // Render Side-by-Side Tables
                 renderTable('rawTableBody', data.raw_data, true);
                 renderTable('safeTableBody', data.safe_data, false);
             } catch (error) {
-                alert('Connection Error. Make sure Uvicorn is running!');
+                console.error('Fetch error:', error);
+                alert('Connection Error. Make sure Uvicorn server is running on http://127.0.0.1:8000');
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                if (window.releaseDataPulse) window.releaseDataPulse();
             }
-
-            btn.innerHTML = originalText;
-            btn.disabled = false;
         });
 
         function renderTable(elementId, rows, isRaw) {
@@ -179,38 +772,45 @@
                 const tr = document.createElement('tr');
                 const isDenied = row.ai_training_consent === 0;
                 
-                // Enterprise row styling: subtle background for denied rows
-                tr.className = 'transition-colors hover:bg-zinc-800/30 ' + 
-                               (isDenied && isRaw ? 'bg-rose-950/10' : '') +
-                               (isDenied && !isRaw ? 'bg-emerald-950/10' : '');
+                // Kage high-contrast subtle row highlighting
+                tr.className = 'transition-colors duration-200 ' + 
+                               (isDenied && isRaw ? 'bg-vermilion/[0.04] hover:bg-vermilion/[0.08]' : '') +
+                               (isDenied && !isRaw ? 'bg-emerald-500/[0.03] hover:bg-emerald-500/[0.06]' : '') +
+                               (!isDenied ? 'hover:bg-white/[0.02]' : '');
 
-                // Enterprise Badges
+                // Badges
                 let badgeHtml = '';
                 if (!isDenied) {
-                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700/50"><span class="w-1 h-1 rounded-full bg-zinc-500"></span>Consented</span>`;
+                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-normal bg-ink-raised text-bone-dim border border-[rgba(223,231,224,0.1)]"><span class="w-1 h-1 rounded-full bg-bone-dim/60"></span>Consented</span>`;
                 } else if (isRaw) {
-                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20"><span class="w-1 h-1 rounded-full bg-rose-500"></span>Violating</span>`;
+                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-normal bg-vermilion/10 text-ember border border-vermilion/30 shadow-[0_0_8px_rgba(224,35,28,0.15)]"><span class="w-1 h-1 rounded-full bg-vermilion animate-pulse"></span>Violating</span>`;
                 } else {
-                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1 h-1 rounded-full bg-emerald-500"></span>Anonymized</span>`;
+                    badgeHtml = `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-normal bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_8px_rgba(52,211,153,0.15)]"><span class="w-1 h-1 rounded-full bg-emerald-400"></span>Anonymized</span>`;
                 }
 
                 // Format Revenue
                 const revFormatted = parseFloat(row.revenue).toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
                 
-                // Dim redacted text
+                // Redacted name styling
                 const nameDisplay = row.customer_name === '[REDACTED]' 
-                    ? `<span class="text-zinc-600 font-mono text-[11px] tracking-wider">${row.customer_name}</span>` 
-                    : `<span class="${isRaw && isDenied ? 'text-rose-200' : 'text-zinc-200'}">${row.customer_name}</span>`;
+                    ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider text-muted bg-[#05070a] border border-[rgba(223,231,224,0.08)]">${row.customer_name}</span>` 
+                    : `<span class="${isRaw && isDenied ? 'text-rose-200 font-normal' : 'text-bone'}">${row.customer_name}</span>`;
                     
+                // Redacted email styling
                 const emailDisplay = row.customer_email === '[REDACTED]' 
-                    ? `<span class="text-zinc-600 font-mono text-[11px] tracking-wider">${row.customer_email}</span>` 
-                    : `<span class="text-zinc-400">${row.customer_email}</span>`;
+                    ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider text-muted bg-[#05070a] border border-[rgba(223,231,224,0.08)]">${row.customer_email}</span>` 
+                    : `<span class="${isRaw && isDenied ? 'text-rose-200/90 font-normal' : 'text-bone-dim'}">${row.customer_email}</span>`;
+
+                // Revenue column
+                const revenueDisplay = !isRaw && isDenied
+                    ? `<span class="text-emerald-400 font-medium">${revFormatted}</span>`
+                    : `<span class="text-bone-dim">${revFormatted}</span>`;
 
                 tr.innerHTML = `
-                    <td class="px-5 py-3 text-zinc-500 font-mono text-[11px]">${row.customer_id}</td>
+                    <td class="px-5 py-3 text-muted font-mono text-[11px]">${row.customer_id}</td>
                     <td class="px-5 py-3">${nameDisplay}</td>
                     <td class="px-5 py-3">${emailDisplay}</td>
-                    <td class="px-5 py-3 text-right font-mono text-[12px] ${!isRaw && isDenied ? 'text-emerald-400 font-medium' : 'text-zinc-400'}">${revFormatted}</td>
+                    <td class="px-5 py-3 text-right font-mono text-[12px]">${revenueDisplay}</td>
                     <td class="px-5 py-3 text-center">${badgeHtml}</td>
                 `;
                 tbody.appendChild(tr);
